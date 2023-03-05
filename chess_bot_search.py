@@ -1,32 +1,11 @@
 import chess
 import chess_evaluation
 
-# pseudocode:
-# function alphabeta(node, depth, α, β, maximizingPlayer) is
-#     if depth = 0 or node is a terminal node then
-#         return the heuristic value of node
-#     if maximizingPlayer then
-#         value := −∞
-#         for each child of node do
-#             value := max(value, alphabeta(child, depth − 1, α, β, FALSE))
-#             α := max(α, value)
-#             if α ≥ β then
-#                 break (* β cutoff *)
-#         return value
-#     else
-#         value := +∞
-#         for each child of node do
-#             value := min(value, alphabeta(child, depth − 1, α, β, TRUE))
-#             β := min(β, value)
-#             if β ≤ α then
-#                 break (* α cutoff *)
-#         return value
-
 def alpha_beta_pruning(board, coefficient_list, depth, alpha, beta, maximizingPlayer):
     if depth == 0 or board.is_game_over():
         return chess_evaluation.evaluate(coefficient_list, board, maximizingPlayer)
     if maximizingPlayer:
-        value = -999999999
+        value = float("-inf")
         all_possible_moves = board.legal_moves
         for move in all_possible_moves:
             board.push(move)
@@ -37,7 +16,7 @@ def alpha_beta_pruning(board, coefficient_list, depth, alpha, beta, maximizingPl
                 break
         return value
     else:
-        value = 999999999
+        value = float("inf")
         all_possible_moves = board.legal_moves
         for move in all_possible_moves:
             board.push(move)
@@ -47,3 +26,26 @@ def alpha_beta_pruning(board, coefficient_list, depth, alpha, beta, maximizingPl
             if beta <= alpha:
                 break
         return value
+    
+def move_search(board, coefficient_list, depth, is_white):
+    all_possible_moves = board.legal_moves
+    max = float("-inf")
+    max_move = None
+    min = float("inf")
+    min_move = None
+    for move in all_possible_moves:
+        board.push(move)
+        new_value = alpha_beta_pruning(board, coefficient_list, depth, float("-inf"), float("inf"), is_white)
+        board.pop()
+        if new_value > max:
+            max = new_value
+            max_move = move
+        if new_value < min:
+            min = new_value
+            min_move = move
+    if is_white:
+        return max_move
+    return min_move
+
+if __name__ == "__main__":
+    pass
