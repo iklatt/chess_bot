@@ -3,7 +3,7 @@ import chess_evaluation
 
 def alpha_beta_pruning(board, coefficient_list, depth, alpha, beta, maximizingPlayer):
     if depth == 0 or board.is_game_over():
-        return chess_evaluation.evaluate(coefficient_list, board, maximizingPlayer)
+        return chess_evaluation.evaluate(board, coefficient_list)
     if maximizingPlayer:
         value = float("-inf")
         all_possible_moves = board.legal_moves
@@ -48,4 +48,8 @@ def move_search(board, coefficient_list, depth, is_white):
     return min_move
 
 if __name__ == "__main__":
-    pass
+    board = chess.Board()
+    coefficient_list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+
+    move = move_search(board, coefficient_list, 2, True)
+    print(move)
