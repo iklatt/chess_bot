@@ -5,7 +5,7 @@ import random
 def game(coefficient_list, depth):
     is_players_turn = random.randint(0,1)
     ai_is_white = not is_players_turn
-    board = chess.Board("r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1")
+    board = chess.Board()
     while not board.is_game_over():
         print("\n", board)
         if is_players_turn:
