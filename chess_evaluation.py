@@ -128,6 +128,7 @@ endgame_king_matrix = [
     [-50,-30,-30,-30,-30,-30,-30,-50]
 ]
 
+# Uses above piece position tables to evaluate board.
 def piece_position_evaluation(fen, coefficient_list = [1, 1, 1, 1, 1, 1]):
     row = 0
     column = 0
@@ -171,11 +172,11 @@ def piece_position_evaluation(fen, coefficient_list = [1, 1, 1, 1, 1, 1]):
             case _:
                 column += int(char) - 1
         column += 1
+    return score
 
 # Evaluate position using helper functions
-def evaluate(board, coefficient_list, is_whites_turn):
+def evaluate(board, coefficient_list):
     long_fen = board.fen()
-    # Recheck this logic
     if board.is_checkmate():
         for i in range(len(long_fen)):
             if long_fen[i] == " ":
@@ -190,3 +191,10 @@ def evaluate(board, coefficient_list, is_whites_turn):
     score += piece_evaluation(fen, coefficient_list)
     score += piece_position_evaluation(fen, coefficient_list[5:])
     return score
+
+
+if __name__ == "__main__":
+    board = chess.Board()
+    coefficient_list = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    num = evaluate(board, coefficient_list)
+    print(num)
