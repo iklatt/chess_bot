@@ -128,6 +128,7 @@ endgame_king_matrix = [
     [-50,-30,-30,-30,-30,-30,-30,-50]
 ]
 
+# Uses above piece position tables to evaluate board.
 def piece_position_evaluation(fen, coefficient_list = [1, 1, 1, 1, 1, 1]):
     row = 0
     column = 0
@@ -176,7 +177,6 @@ def piece_position_evaluation(fen, coefficient_list = [1, 1, 1, 1, 1, 1]):
 # Evaluate position using helper functions
 def evaluate(board, coefficient_list):
     long_fen = board.fen()
-    # Recheck this logic
     if board.is_checkmate():
         for i in range(len(long_fen)):
             if long_fen[i] == " ":
