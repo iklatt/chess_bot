@@ -58,7 +58,7 @@ def iterative_deepening(max_time_to_start, board, coefficient_list, is_white):
         depth += 1
         current_time = time.time()
     end_time = time.time()
-    print("Took", end_time - start_time, "seconds to finish.  Went to depth", depth - 1)
+    #print("Took", end_time - start_time, "seconds to finish.  Went to depth", depth - 1)
     return move
 
 if __name__ == "__main__":
