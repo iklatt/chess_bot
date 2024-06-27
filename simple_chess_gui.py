@@ -12,12 +12,13 @@ canvas.place(relx=.5, rely=.5, anchor=tkinter.CENTER)
 for row in range(8):
     for column in range(8):
         if (row + column) % 2 == 0:
-            color="black"
+            color="#F0D9B5"
         else:
-            color = "white"
+            color="#B58863"
         canvas.create_rectangle(row * 100 + 1, column * 100 + 1, (row + 1) * 100 + 1, (column + 1) * 100 + 1, 
-                                fill=color, outline = 'black')
+                                fill=color)
 
+canvas.create_rectangle
 canvas.pack()
 
 
