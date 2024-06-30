@@ -28,6 +28,7 @@ for row in range(8):
 
 # Dictionary to hold image references
 image_references = {}
+pieces = {}
 piece_dictionary = {
     "K": "white_king.png",
     "Q": "white_queen.png",
@@ -46,10 +47,10 @@ def set_piece(fen_piece, xPos, yPos):
     global img
     file = "piece_images\\" + piece_dictionary[fen_piece]
     img = ImageTk.PhotoImage( Image.open(file).convert('RGBA').resize((100, 100)) )
-    image_references[(xPos, yPos)] = img
-    canvas.create_image(xPos, yPos, image=img)
+    image_references[(xPos // 100, yPos // 100)] = img
+    pieces[(xPos // 100, yPos // 100)] = canvas.create_image(xPos, yPos, image=img)
 
-
+#TODO: Need to reset image_references every time this is called.
 def set_up_from_FEN(fen):
     row = 0
     col = 0
@@ -77,26 +78,31 @@ def convert_board_location(xPos, yPos, boardIsFlipped):
     return chr(97 + x) + str(y)
 
 # Drag and Drop functionality:
+
 # This function chooses which piece is getting dragged.
-#TODO: Finish functionality.
+grabbed_piece = FALSE
 def on_start(event):
-    # Note for future: event.x and event.y are the coordinates of where the mouse was clicked.
-    pass
+    clicked_square = (event.x // 100, event.y // 100)
+    if clicked_square in pieces:
+        global grabbed_piece
+        grabbed_piece = pieces[clicked_square]
 
 def move(event):
-    # canvas.moveto(piece, event.x - 50, event.y - 50)
+    if grabbed_piece:
+        canvas.moveto(grabbed_piece, event.x - 50, event.y - 50)
     # coords_label.config(text="Coordinates: " + str(event.x) + ", " + str(event.y))
-    pass
 
 # This function ensures the piece is centered on the square that it was dropped onto.
 #TODO: Need these squares to be valid, ie can't be out of bounds nor can it be an illegal move.
 #      If an illegal move is made, return the piece to its original location
 def on_drop(event):
-    # coords = canvas.coords(piece)
-    # x = (coords[0] // 100) * 100
-    # y = (coords[1] // 100) * 100
-    # canvas.moveto(piece, x, y)
-    pass
+    global grabbed_piece
+    if grabbed_piece:
+        coords = canvas.coords(grabbed_piece)
+        x = (coords[0] // 100) * 100
+        y = (coords[1] // 100) * 100
+        canvas.moveto(grabbed_piece, x, y)
+        grabbed_piece = FALSE
 
 # Binds:
 canvas.bind("<ButtonPress-1>", on_start)
