@@ -1,7 +1,17 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-
 import chess
+
+class ChessPiece:
+    def __init__(self, fenChar, xPos, yPos, image):
+        self.x = xPos
+        self.y = yPos
+        self.image = image
+        self.fen = fenChar
+    
+    def move(self, newX, newY):
+        self.x = newX
+        self.y = newY
 
 class ChessBoard:
     def __init__(self, window):
