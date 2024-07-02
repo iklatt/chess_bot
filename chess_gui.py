@@ -54,6 +54,7 @@ class ChessBoard:
         self.game = chess.Board()
 
         self.selected_piece = False
+        self.castling_moves = ["e1g1","e1h1", "e1a1", "e1b1", "e1c1", "e8g8","e8h8", "e8a8", "e8b8", "e8c8"]
 
         # Bindings for drag and drop
         self.canvas.bind("<ButtonPress-1>", self.on_start)
@@ -102,6 +103,18 @@ class ChessBoard:
         if start_x // 100 != column or start_y // 100 != row:
             uci_move = self.convert_board_location(start_x, start_y, False) + self.convert_board_location(xPos, yPos, False)
             self.game.push_uci(uci_move)
+            # Check if it's castling:
+            for index in range(len(self.castling_moves)):
+                if self.castling_moves[index] == uci_move:
+                    if index in [0,1]:
+                        uci_move = "e1h1"
+                    elif index in [2,3,4]:
+                        uci_move = "e1c1"
+                    elif index in [5,6]:
+                        uci_move = "e8h8"
+                    else:
+                        uci_move = "e8c8"
+            print(self.game)
             # If there is another piece at this location, delete it:
             for piece in self.pieces_list:
                 if (column, row) == (piece.x // 100, piece.y // 100):
