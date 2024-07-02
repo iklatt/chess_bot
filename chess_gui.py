@@ -1,7 +1,18 @@
 import tkinter as tk
 from PIL import Image, ImageTk
-
 import chess
+
+class ChessPiece:
+    def __init__(self, fenChar, xPos, yPos, image, canvas_object):
+        self.x = xPos
+        self.y = yPos
+        self.image = image
+        self.fen = fenChar
+        self.piece = canvas_object
+    
+    def move(self, newX, newY):
+        self.x = newX
+        self.y = newY
 
 class ChessBoard:
     def __init__(self, window):
@@ -23,8 +34,7 @@ class ChessBoard:
                                         fill=color)
         
         # Set up the pieces:
-        self.image_references = {}
-        self.piece_location_dictionary = {}
+        self.pieces_list = []
         self.fen_to_image_dictionary = {
             "K": "white_king.png",
             "Q": "white_queen.png",
@@ -44,7 +54,6 @@ class ChessBoard:
         self.game = chess.Board()
 
         self.selected_piece = False
-        self.selected_piece_original_position = None
 
         # Bindings for drag and drop
         self.canvas.bind("<ButtonPress-1>", self.on_start)
@@ -53,14 +62,12 @@ class ChessBoard:
 
     def set_piece(self, fen_piece, xPos, yPos):
         file = "piece_images\\" + self.fen_to_image_dictionary[fen_piece]
-        img = ImageTk.PhotoImage( Image.open(file).convert('RGBA').resize((100, 100)) )
-        self.image_references[(xPos // 100, yPos // 100)] = img
-        self.piece_location_dictionary[(xPos // 100, yPos // 100)] = self.canvas.create_image(xPos, yPos, image=img)
+        image = ImageTk.PhotoImage( Image.open(file).convert('RGBA').resize((100, 100)) )
+        piece = ChessPiece(fen_piece, xPos, yPos, image, self.canvas.create_image(xPos, yPos, image=image))
+        self.pieces_list.append(piece)
 
-    #TODO: Need to reset image_references every time this is called.
     def set_up_from_FEN(self, fen):
-        self.image_references = {}
-        self.piece_location_dictionary = {}
+        self.pieces_list = []
         row = 0
         col = 0
         for char in fen:
@@ -87,30 +94,29 @@ class ChessBoard:
         return chr(97 + x) + str(y)
     
     def make_move(self, xPos, yPos):
-        start_x, start_y = self.selected_piece_original_position
-        start_x *= 100
-        start_y *= 100
+        start_x = self.selected_piece.x
+        start_y = self.selected_piece.y
+        column = xPos // 100
+        row = yPos // 100
         # Only update the chess board when the piece moves to a different location:
-        if start_x != xPos or start_y != yPos:
+        if start_x // 100 != column or start_y // 100 != row:
             uci_move = self.convert_board_location(start_x, start_y, False) + self.convert_board_location(xPos, yPos, False)
             self.game.push_uci(uci_move)
-            x = xPos // 100
-            y = yPos // 100
-            if (x, y) in self.piece_location_dictionary:
-                self.piece_location_dictionary.pop((x, y))
-            self.piece_location_dictionary[(x, y)] = self.selected_piece
-            self.piece_location_dictionary.pop((start_x // 100, start_y // 100))
-        self.canvas.moveto(self.selected_piece, xPos, yPos)
+            # If there is another piece at this location, delete it:
+            for piece in self.pieces_list:
+                if (column, row) == (piece.x // 100, piece.y // 100):
+                    self.pieces_list.remove(piece)
+            self.selected_piece.move(column * 100, row * 100)
+        self.canvas.moveto(self.selected_piece.piece, column * 100, row * 100)
 
     def is_illegal_move(self, xPos, yPos):
         # Check if the move is in bounds
         if xPos < 0 or xPos >= 800 or yPos < 0 or yPos >= 800:
             return True
         # Check if the move is legal:
-        start_x, start_y = self.selected_piece_original_position
-        start_x *= 100
-        start_y *= 100
-        if start_x == xPos and start_y == yPos:
+        start_x = self.selected_piece.x
+        start_y = self.selected_piece.y
+        if start_x // 100 == xPos // 100 and start_y // 100 == yPos // 100:
             return True
         uci_move = self.convert_board_location(start_x, start_y, False) + self.convert_board_location(xPos, yPos, False)
         if chess.Move.from_uci(uci_move) in self.game.legal_moves:
@@ -119,30 +125,27 @@ class ChessBoard:
 
     def on_start(self, event):
         clicked_square = (event.x // 100, event.y // 100)
-        if clicked_square in self.piece_location_dictionary:
-            self.selected_piece = self.piece_location_dictionary[clicked_square]
-            self.selected_piece_original_position = clicked_square
+        for piece in self.pieces_list:
+            if clicked_square == (piece.x // 100, piece.y // 100):
+                self.selected_piece = piece
 
     def move(self, event):
         if self.selected_piece:
-            self.canvas.moveto(self.selected_piece, event.x - 50, event.y - 50)
+            self.canvas.moveto(self.selected_piece.piece, event.x - 50, event.y - 50)
 
     # This function ensures the piece is centered on the square that it was dropped onto.
     #TODO: Need these squares to be valid, ie can't be out of bounds nor can it be an illegal move.
     #      If an illegal move is made, return the piece to its original location
     def on_drop(self, event):
         if self.selected_piece:
-            x = (event.x // 100) * 100
-            y = (event.y // 100) * 100
+            x = event.x
+            y = event.y
             #check that the move is legal:
             if self.is_illegal_move(x, y):
-                x,y = self.selected_piece_original_position
-                x *= 100
-                y *= 100
+                x = self.selected_piece.x
+                y = self.selected_piece.y
             self.make_move(x, y)
             self.selected_piece = False
-            self.selected_piece_original_position = None
-
 
 if __name__ == "__main__":
     window = tk.Tk()
