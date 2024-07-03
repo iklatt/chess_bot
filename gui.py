@@ -3,16 +3,21 @@ from PIL import Image, ImageTk
 import chess
 
 class ChessPiece:
-    def __init__(self, fenChar, xPos, yPos, image, canvas_object):
+    def __init__(self, fenChar, xPos, yPos, image, canvasObject):
         self.x = xPos
         self.y = yPos
         self.image = image
         self.fen = fenChar
-        self.piece = canvas_object
+        self.piece = canvasObject
     
     def move(self, newX, newY):
         self.x = newX
         self.y = newY
+    
+    def promote(self, newFenChar, newImage, newCanvasObject):
+        self.fen = newFenChar
+        self.image = newImage
+        self.piece = newCanvasObject
 
 class ChessBoard:
     def __init__(self, window):
@@ -62,6 +67,7 @@ class ChessBoard:
         self.canvas.bind("<B1-Motion>", self.move)
         self.canvas.bind("<ButtonRelease-1>", self.on_drop)
     
+
     # Convert coordinates to chess notation for that square:
     def convert_board_location(self, xPos, yPos, boardIsFlipped):
         x = xPos // 100
@@ -73,6 +79,7 @@ class ChessBoard:
             y = 8 - y
         return chr(97 + x) + str(y)
     
+
     def initialize_pieces(self):
         fen_pieces = "KQRRBBNNPPPPPPPPkqrrbbnnpppppppp"
         xPos = 0
@@ -82,6 +89,7 @@ class ChessBoard:
             image = ImageTk.PhotoImage( Image.open(file).convert('RGBA').resize((100, 100)) )
             piece = ChessPiece(fen_char, xPos, yPos, image, self.canvas.create_image(xPos, yPos, image=image))
             self.pieces_list.append(piece)
+
 
     def from_fen(self):
         pieces = self.pieces_list.copy()
@@ -106,7 +114,45 @@ class ChessBoard:
                         break
         print(fen)
         for i in range(len(pieces)):
+            print("Removing:", pieces[i].fen)
             self.pieces_list.remove(pieces[i])
+
+
+    def is_legal_pawn_promotion(self, uci_move):
+        possible_promotions = ['q', 'r', 'n', 'b']
+        black_is_promoting = self.selected_piece.fen == 'P' and uci_move[1] == '7' and uci_move[3] == '8'
+        white_is_promoting = self.selected_piece.fen == 'p' and uci_move[1] == '2' and uci_move[3] == '1'
+        if black_is_promoting or white_is_promoting:
+            for promo in possible_promotions:
+                if chess.Move.from_uci(uci_move + promo) in self.game.legal_moves:
+                    return True
+        return False
+
+    #TODO: Get user input via buttons that appear on the screen
+    def get_user_input(self):
+        possible_input = ['q', 'r', 'b', 'n']
+        user_input = ""
+        while user_input not in possible_input:
+            user_input = input("What do you want to promote to?")
+        return user_input
+
+
+    def promote_pawn(self, uci_move, xPos, yPos):
+        x = xPos // 100 * 100
+        y = yPos // 100 * 100
+        promotion_char = self.get_user_input()
+        uci_move += promotion_char
+        self.game.push_uci(uci_move)
+        if self.selected_piece.fen.isupper():
+            promotion_char = promotion_char.upper()
+        file = "piece_images\\" + self.fen_to_image_dictionary[promotion_char]
+        image = ImageTk.PhotoImage( Image.open(file).convert('RGBA').resize((100, 100)) )
+        new_piece = self.canvas.create_image(x, y, image=image)
+        self.selected_piece.promote(promotion_char, image, new_piece)
+        self.selected_piece.x = x
+        self.selected_piece.y = y
+        self.from_fen()
+
 
     def make_move(self, xPos, yPos):
         if xPos < 0 or xPos >= 800 or yPos < 0 or yPos >= 800:
@@ -120,6 +166,12 @@ class ChessBoard:
             self.game.push_uci(uci_move)
             self.from_fen()
             return True
+        # See if the move is a pawn promotion:
+        if self.is_legal_pawn_promotion(uci_move):
+            #Promote
+            self.promote_pawn(uci_move, xPos, yPos)
+            return True
+
 
     def on_start(self, event):
         clicked_square = (event.x // 100, event.y // 100)
